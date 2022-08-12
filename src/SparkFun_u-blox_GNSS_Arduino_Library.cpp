@@ -7952,6 +7952,7 @@ bool SFE_UBLOX_GNSS::powerSaveMode(bool power_save, uint16_t maxWait)
     _debugSerial->println(protVer);
   }
   */
+
   if (protVer >= 27)
   {
     if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
@@ -7961,29 +7962,69 @@ bool SFE_UBLOX_GNSS::powerSaveMode(bool power_save, uint16_t maxWait)
     return (false);
   }
 
-  // Now let's change the power setting using UBX-CFG-RXM
+  // if (protVer >= 18)
+  //{
+  //  Now let's change the power setting using UBX-CFG-PMS
   packetCfg.cls = UBX_CLASS_CFG;
-  packetCfg.id = UBX_CFG_RXM;
+  packetCfg.id = UBX_CFG_PMS;
   packetCfg.len = 0;
   packetCfg.startingSpot = 0;
-
-  // Ask module for the current power management settings. Loads into payloadCfg.
-  if (sendCommand(&packetCfg, maxWait) != SFE_UBLOX_STATUS_DATA_RECEIVED) // We are expecting data and an ACK
+  if (sendCommand(&packetCfg, maxWait) != SFE_UBLOX_STATUS_DATA_RECEIVED)
+  {
     return (false);
+  }
+
+  payloadCfg[0] = 0x00;
+
+  payloadCfg[2] = 0;
+  payloadCfg[3] = 0;
+  payloadCfg[4] = 0;
+  payloadCfg[5] = 0;
 
   if (power_save)
   {
-    payloadCfg[1] = 1; // Power Save Mode
+    payloadCfg[1] = 0x03; // 1Hz
+    payloadCfg[2] = 0;
+    payloadCfg[3] = 0;
+    payloadCfg[4] = 0;
+    payloadCfg[5] = 0;
   }
   else
   {
-    payloadCfg[1] = 0; // Continuous Mode
+    payloadCfg[1] = 0;
   }
-
-  packetCfg.len = 2;
+  packetCfg.len = 8;
   packetCfg.startingSpot = 0;
 
   return (sendCommand(&packetCfg, maxWait) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
+  // }
+  // else
+  // {
+
+  //   // Now let's change the power setting using UBX-CFG-RXM
+  //   packetCfg.cls = UBX_CLASS_CFG;
+  //   packetCfg.id = UBX_CFG_RXM;
+  //   packetCfg.len = 0;
+  //   packetCfg.startingSpot = 0;
+
+  //   // Ask module for the current power management settings. Loads into payloadCfg.
+  //   if (sendCommand(&packetCfg, maxWait) != SFE_UBLOX_STATUS_DATA_RECEIVED) // We are expecting data and an ACK
+  //     return (false);
+
+  //   if (power_save)
+  //   {
+  //     payloadCfg[1] = 1; // Power Save Mode
+  //   }
+  //   else
+  //   {
+  //     payloadCfg[1] = 0; // Continuous Mode
+  //   }
+
+  //   packetCfg.len = 2;
+  //   packetCfg.startingSpot = 0;
+
+  //   return (sendCommand(&packetCfg, maxWait) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
+  // }
 }
 
 // Get Power Save Mode
